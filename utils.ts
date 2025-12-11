@@ -1,7 +1,7 @@
 import { SlideTextData, GalleryImage } from './types';
 
-// Compress and resize image to fit in URL
-// Reduced max size to 300px and quality to 0.5 to ensure URLs remain manageable for sharing
+// Compress and resize image to fit in URL/Storage
+// Increased max size to 1280px and quality to 0.85 for high clarity sharing
 export const resizeImage = (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -11,7 +11,7 @@ export const resizeImage = (file: File): Promise<string> => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const MAX_SIZE = 300; 
+        const MAX_SIZE = 1280; // Significantly increased for better quality
         
         if (width > height) {
           if (width > MAX_SIZE) {
@@ -30,8 +30,8 @@ export const resizeImage = (file: File): Promise<string> => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            // Convert to JPEG with higher compression
-            resolve(canvas.toDataURL('image/jpeg', 0.5));
+            // Convert to JPEG with high quality (0.85)
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
         } else {
             resolve(e.target?.result as string);
         }

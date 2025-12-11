@@ -257,12 +257,12 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
           </div>
         </div>
 
-        {/* Image Stack Container - Flexible height for mobile */}
+        {/* Image Stack Container */}
         <div className="flex-1 relative h-[40vh] min-h-[300px] w-full max-w-[500px] perspective-1000 order-0 md:order-1 mt-8 md:mt-0">
           {galleryImages.map((imgData, idx) => (
             <motion.div
               key={idx}
-              className="absolute w-40 h-56 md:w-60 md:h-80 bg-white p-2 shadow-2xl rounded-lg group"
+              className={`absolute w-40 h-56 md:w-60 md:h-80 bg-white p-2 shadow-2xl rounded-lg group ${isReadOnly ? 'cursor-pointer' : ''}`}
               initial={{ 
                 opacity: 0, 
                 rotate: idx === 0 ? -10 : idx === 1 ? 5 : 15,
@@ -285,6 +285,9 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                 left: idx === 0 ? '15%' : idx === 1 ? '45%' : '30%',
                 zIndex: idx
               }}
+              onClick={() => {
+                  if (isReadOnly) setViewingIndex(idx);
+              }}
             >
               <div className="relative w-full h-full overflow-hidden rounded">
                 <img 
@@ -296,34 +299,25 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                     }}
                 />
                 
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
-                    {!isReadOnly ? (
-                        <>
-                            <button 
-                                onClick={() => handleEditClick(idx)}
-                                className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-pink-500 hover:scale-110 transition-all"
-                                title="Upload Photo"
-                            >
-                                <Camera size={20} />
-                            </button>
-                            <button 
-                                onClick={(e) => handleAdjustClick(e, idx)}
-                                className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
-                                title="Adjust Position & Zoom"
-                            >
-                                <Move size={20} />
-                            </button>
-                        </>
-                    ) : (
+                {/* Only show edit overlays if NOT read-only */}
+                {!isReadOnly && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
                         <button 
-                            onClick={() => setViewingIndex(idx)}
-                            className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
-                            title="Full View"
+                            onClick={(e) => { e.stopPropagation(); handleEditClick(idx); }}
+                            className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-pink-500 hover:scale-110 transition-all"
+                            title="Upload Photo"
                         >
-                            <Maximize2 size={24} />
+                            <Camera size={20} />
                         </button>
-                    )}
-                </div>
+                        <button 
+                            onClick={(e) => handleAdjustClick(e, idx)}
+                            className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
+                            title="Adjust Position & Zoom"
+                        >
+                            <Move size={20} />
+                        </button>
+                    </div>
+                )}
               </div>
             </motion.div>
           ))}
