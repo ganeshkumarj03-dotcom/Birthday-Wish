@@ -1,42 +1,65 @@
 import { BirthdayData } from '../types';
 
-// This service handles interaction with the backend database.
-// Currently simulates a DB using LocalStorage so you can test the functionality immediately.
-// To use a real backend, simply replace the implementation of these two functions.
+// We are now using JSONBlob.com as a free, no-login cloud database.
+// This allows the data to be saved on a server so it can be accessed 
+// from any device (Laptop -> Mobile).
 
-const SIMULATE_DELAY = 800; // ms to simulate network latency
+const API_BASE_URL = 'https://jsonblob.com/api/jsonBlob';
 
 export const saveBirthdayData = async (data: BirthdayData): Promise<string> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // GENERATE ID
-      const id = Math.random().toString(36).substring(2, 9);
-      const dataWithId = { ...data, id, createdAt: Date.now() };
-      
-      // SAVE TO "DATABASE" (LocalStorage for demo)
-      // In a real app: await fetch('/api/birthdays', { method: 'POST', body: JSON.stringify(data) })
-      try {
-        localStorage.setItem(`lumiwish_${id}`, JSON.stringify(dataWithId));
-      } catch (e) {
-        console.error("Database Error:", e);
-      }
-      
-      resolve(id);
-    }, SIMULATE_DELAY);
-  });
+  try {
+    const response = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    // The API returns the location of the saved data in the header
+    // Example: https://jsonblob.com/api/jsonBlob/12345-67890-abcd
+    const location = response.headers.get('Location');
+    
+    if (!location) {
+        throw new Error("No location header returned");
+    }
+
+    // Extract the ID from the end of the URL
+    const id = location.split('/').pop();
+    
+    if (!id) {
+         throw new Error("Could not parse ID");
+    }
+
+    return id;
+  } catch (error) {
+    console.error("Error saving to database:", error);
+    throw error;
+  }
 };
 
 export const getBirthdayData = async (id: string): Promise<BirthdayData | null> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // FETCH FROM "DATABASE"
-      // In a real app: const res = await fetch(`/api/birthdays/${id}`); return res.json();
-      const stored = localStorage.getItem(`lumiwish_${id}`);
-      if (stored) {
-        resolve(JSON.parse(stored));
-      } else {
-        resolve(null);
-      }
-    }, SIMULATE_DELAY);
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+        return null;
+    }
+
+    const data = await response.json();
+    return data as BirthdayData;
+  } catch (error) {
+    console.error("Error fetching from database:", error);
+    return null;
+  }
 };
