@@ -7,14 +7,13 @@ import AiWishSlide from './components/slides/AiWishSlide';
 import Controls from './components/Controls';
 import { SlideType, SlideTextData, GalleryImage } from './types';
 import { decodeStateFromUrl, encodeStateToUrl } from './utils';
-import { Check, Copy, Link as LinkIcon, X } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 function App() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [name, setName] = useState('My Friend');
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   // State for all editable text in the app
   const [textData, setTextData] = useState<SlideTextData>({
@@ -52,6 +51,18 @@ function App() {
     }
   }, []);
 
+  // Auto-save state to URL whenever it changes
+  useEffect(() => {
+    // Debounce the update to prevent freezing while typing
+    const handler = setTimeout(() => {
+        const encoded = encodeStateToUrl({ name, textData, galleryImages });
+        // Update URL without reloading page
+        window.history.replaceState(null, '', `#data=${encoded}`);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [name, textData, galleryImages]);
+
   // State for the generic edit modal
   const [editingState, setEditingState] = useState<{
     type: 'name' | 'text';
@@ -85,21 +96,13 @@ function App() {
   };
 
   const handleShare = () => {
-      const encoded = encodeStateToUrl({ name, textData, galleryImages });
-      if (encoded) {
-          const url = `${window.location.origin}${window.location.pathname}#data=${encoded}`;
-          setShareUrl(url);
-          setCopied(false);
-      } else {
-          alert("Could not generate link. The images might be too large.");
-      }
-  };
-
-  const copyToClipboard = () => {
-      if (shareUrl) {
-          navigator.clipboard.writeText(shareUrl);
-          setCopied(true);
-      }
+      // Simply copy the current URL which is always up to date due to the auto-save effect
+      navigator.clipboard.writeText(window.location.href).then(() => {
+          setToastMessage("Link copied! Send it to your friend.");
+          setTimeout(() => setToastMessage(null), 3000);
+      }).catch(() => {
+          setToastMessage("Could not copy. Please copy the URL manually.");
+      });
   };
 
   const handleSave = () => {
@@ -142,13 +145,13 @@ function App() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (editingState || shareUrl) return;
+      if (editingState) return;
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'ArrowLeft') handlePrev();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentSlideIndex, editingState, shareUrl]);
+  }, [currentSlideIndex, editingState]);
 
   const slideVariants = {
     enter: (direction: number) => ({
@@ -190,62 +193,21 @@ function App() {
   };
 
   return (
-    <div className="relative w-full h-screen bg-black text-white overflow-hidden font-sans selection:bg-pink-500 selection:text-white">
+    // Fixed positioning with 100dvh (dynamic viewport height) handles mobile browser bars better than h-screen
+    <div className="fixed inset-0 w-full h-[100dvh] bg-black text-white overflow-hidden font-sans selection:bg-pink-500 selection:text-white">
       
-      {/* Share Modal */}
+      {/* Toast Notification */}
       <AnimatePresence>
-        {shareUrl && (
-             <motion.div 
-             initial={{ opacity: 0 }} 
-             animate={{ opacity: 1 }} 
-             exit={{ opacity: 0 }}
-             className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur-md px-4"
-           >
-             <motion.div 
-               initial={{ scale: 0.9, y: 20 }}
-               animate={{ scale: 1, y: 0 }}
-               className="bg-gray-800 p-6 rounded-2xl w-full max-w-lg border border-gray-700 shadow-2xl"
-             >
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold flex items-center gap-2">
-                        <LinkIcon size={20} className="text-pink-500" /> Share Your Wish
-                    </h3>
-                    <button onClick={() => setShareUrl(null)} className="text-gray-400 hover:text-white">
-                        <X size={24} />
-                    </button>
-                </div>
-                
-                <p className="text-gray-300 text-sm mb-4">
-                    Send this unique link to your friend. It contains all your customizations.
-                </p>
-
-                <div className="bg-gray-950 p-3 rounded-lg flex items-center gap-2 border border-gray-700 mb-6">
-                    <input 
-                        type="text" 
-                        readOnly 
-                        value={shareUrl} 
-                        className="bg-transparent text-gray-400 text-sm flex-1 outline-none truncate"
-                    />
-                </div>
-
-                <div className="flex gap-3">
-                    <button 
-                        onClick={() => setShareUrl(null)}
-                        className="flex-1 py-3 text-gray-300 hover:text-white font-semibold"
-                    >
-                        Close
-                    </button>
-                    <button 
-                        onClick={copyToClipboard}
-                        className={`flex-1 py-3 rounded-xl font-bold transition-all flex justify-center items-center gap-2 ${
-                            copied ? 'bg-green-600 hover:bg-green-700' : 'bg-pink-600 hover:bg-pink-700'
-                        }`}
-                    >
-                        {copied ? <><Check size={18} /> Copied!</> : <><Copy size={18} /> Copy Link</>}
-                    </button>
-                </div>
-             </motion.div>
-           </motion.div>
+        {toastMessage && (
+            <motion.div
+                initial={{ opacity: 0, y: -50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -50 }}
+                className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] bg-white/90 backdrop-blur-md text-black px-6 py-3 rounded-full shadow-xl font-semibold flex items-center gap-2 w-max max-w-[90vw] text-center"
+            >
+                <Check size={18} className="text-green-600 shrink-0" />
+                {toastMessage}
+            </motion.div>
         )}
       </AnimatePresence>
 
@@ -261,7 +223,7 @@ function App() {
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-gray-800 p-8 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl"
+              className="bg-gray-800 p-6 md:p-8 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl"
             >
               <h3 className="text-xl font-bold mb-4">
                   {editingState.type === 'name' ? 'Who is the birthday star?' : 'Customize Message'}

@@ -6,7 +6,7 @@ import { Edit2 } from 'lucide-react';
 
 const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit }) => {
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+    <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 px-4">
       {isActive && <Confetti />}
       
       <motion.div
@@ -14,11 +14,11 @@ const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit }) 
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 1.2 }}
         transition={{ duration: 0.8 }}
-        className="z-20 text-center px-4"
+        className="z-20 text-center w-full max-w-4xl"
       >
-        <div className="relative inline-block group mb-4">
+        <div className="relative inline-block group mb-2 md:mb-4">
             <motion.p 
-            className="text-pink-300 font-handwriting text-2xl md:text-4xl"
+            className="text-pink-300 font-handwriting text-xl md:text-4xl"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
@@ -34,9 +34,9 @@ const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit }) 
             </button>
         </div>
         
-        <div className="relative inline-block group w-full">
+        <div className="relative inline-block group w-full mb-4">
             <motion.h1 
-            className="text-6xl md:text-8xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-yellow-300 drop-shadow-lg"
+            className="text-5xl sm:text-6xl md:text-8xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-yellow-300 drop-shadow-lg leading-tight p-2"
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
@@ -53,7 +53,7 @@ const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit }) 
         </div>
         
         <motion.div
-          className="mt-6 text-5xl md:text-7xl font-handwriting text-white"
+          className="text-4xl sm:text-5xl md:text-7xl font-handwriting text-white break-words"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}

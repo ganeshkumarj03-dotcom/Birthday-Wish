@@ -8,8 +8,6 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [adjustingIndex, setAdjustingIndex] = useState<number | null>(null);
-  
-  // Temporary state for the adjustment modal
   const [tempAdjust, setTempAdjust] = useState({ scale: 1, offsetX: 0, offsetY: 0 });
 
   const handleEditClick = (index: number) => {
@@ -39,7 +37,6 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
     const file = event.target.files?.[0];
     if (file && editingIndex !== null) {
         try {
-            // Compress image before saving to state (critical for URL sharing)
             const resizedImage = await resizeImage(file);
             onUpdateImage(editingIndex, { src: resizedImage, scale: 1, offsetX: 0, offsetY: 0 });
         } catch (error) {
@@ -53,14 +50,12 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col md:flex-row items-center justify-center bg-gray-900 overflow-hidden px-4 md:px-20">
+    <div className="relative w-full h-full flex flex-col md:flex-row items-center justify-center bg-gray-900 overflow-hidden px-4 md:px-20 py-16 md:py-0">
       <div className="absolute inset-0 bg-gradient-to-tr from-pink-900 to-indigo-900 opacity-80"></div>
       
-      {/* Background decoration */}
       <div className="absolute top-10 left-10 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
       <div className="absolute bottom-10 right-10 w-64 h-64 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
 
-      {/* Hidden File Input */}
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -81,9 +76,9 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
             <motion.div 
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden"
+              className="bg-gray-800 w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+              <div className="p-4 border-b border-gray-700 flex justify-between items-center shrink-0">
                 <h3 className="font-bold text-white flex items-center gap-2">
                   <Move size={18} /> Adjust Photo
                 </h3>
@@ -92,9 +87,8 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                 </button>
               </div>
 
-              <div className="p-6 flex flex-col items-center">
-                {/* Preview Area */}
-                <div className="relative w-64 h-80 bg-gray-900 rounded-lg overflow-hidden shadow-inner border border-gray-600 mb-6">
+              <div className="p-4 flex flex-col items-center overflow-y-auto">
+                <div className="relative w-full aspect-[4/5] max-h-[40vh] bg-gray-900 rounded-lg overflow-hidden shadow-inner border border-gray-600 mb-6">
                   <img 
                     src={galleryImages[adjustingIndex].src} 
                     alt="Preview"
@@ -103,7 +97,6 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                       transform: `translate(${tempAdjust.offsetX}%, ${tempAdjust.offsetY}%) scale(${tempAdjust.scale})`
                     }}
                   />
-                  {/* Grid overlay for reference */}
                   <div className="absolute inset-0 pointer-events-none opacity-20">
                     <div className="w-full h-full grid grid-cols-3 grid-rows-3">
                         {[...Array(9)].map((_, i) => <div key={i} className="border border-white/50"></div>)}
@@ -111,9 +104,7 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                   </div>
                 </div>
 
-                {/* Controls */}
                 <div className="w-full space-y-6">
-                  {/* Zoom Control */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
                       <span>Zoom out</span>
@@ -134,7 +125,6 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                     </div>
                   </div>
 
-                  {/* Pan Controls (D-Pad style) */}
                   <div className="flex justify-center items-center gap-6">
                       <div className="grid grid-cols-3 gap-2">
                         <div></div>
@@ -145,7 +135,6 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                             <ChevronUp size={24} />
                         </button>
                         <div></div>
-                        
                         <button 
                             className="p-3 bg-gray-700 hover:bg-pink-500 rounded-lg transition-colors text-white"
                             onClick={() => updateTemp('offsetX', tempAdjust.offsetX - 5)}
@@ -165,7 +154,6 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                         >
                             <ChevronRight size={24} />
                         </button>
-
                         <div></div>
                         <button 
                             className="p-3 bg-gray-700 hover:bg-pink-500 rounded-lg transition-colors text-white"
@@ -179,7 +167,7 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                 </div>
               </div>
 
-              <div className="p-4 bg-gray-900 border-t border-gray-700 flex justify-end gap-3">
+              <div className="p-4 bg-gray-900 border-t border-gray-700 flex justify-end gap-3 shrink-0">
                 <button 
                   onClick={() => setAdjustingIndex(null)}
                   className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
@@ -198,12 +186,11 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
-      <div className="z-10 flex flex-col md:flex-row items-center gap-8 w-full max-w-6xl">
-        <div className="flex-1 text-center md:text-left">
+      <div className="z-10 flex flex-col md:flex-row items-center gap-4 md:gap-8 w-full max-w-6xl h-full justify-center md:h-auto">
+        <div className="flex-1 text-center md:text-left order-1 md:order-0 mt-4 md:mt-0">
           <div className="relative group inline-block">
             <motion.h2 
-                className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight whitespace-pre-line"
+                className="text-3xl md:text-6xl font-bold text-white mb-2 md:mb-6 leading-tight whitespace-pre-line"
                 initial={{ x: -50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -212,16 +199,16 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
             </motion.h2>
             <button 
                 onClick={() => onEdit('gallery', 'title', textData.gallery.title)}
-                className="absolute -right-10 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
+                className="absolute -right-8 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
                 title="Edit title"
             >
-                <Edit2 size={18} className="text-white" />
+                <Edit2 size={16} className="text-white" />
             </button>
           </div>
 
-          <div className="relative group mt-4">
+          <div className="relative group mt-2 md:mt-4">
             <motion.p 
-                className="text-lg text-gray-300 max-w-md whitespace-pre-line"
+                className="text-sm md:text-lg text-gray-300 max-w-md whitespace-pre-line px-2 md:px-0"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -230,19 +217,20 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
             </motion.p>
             <button 
                 onClick={() => onEdit('gallery', 'body', textData.gallery.body)}
-                className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
+                className="absolute -right-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
                 title="Edit message"
             >
-                <Edit2 size={16} className="text-white" />
+                <Edit2 size={14} className="text-white" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 relative h-[400px] w-full max-w-[500px] perspective-1000">
+        {/* Image Stack Container - Flexible height for mobile */}
+        <div className="flex-1 relative h-[40vh] min-h-[300px] w-full max-w-[500px] perspective-1000 order-0 md:order-1 mt-8 md:mt-0">
           {galleryImages.map((imgData, idx) => (
             <motion.div
               key={idx}
-              className="absolute w-48 h-64 md:w-60 md:h-80 bg-white p-2 shadow-2xl rounded-lg group"
+              className="absolute w-40 h-56 md:w-60 md:h-80 bg-white p-2 shadow-2xl rounded-lg group"
               initial={{ 
                 opacity: 0, 
                 rotate: idx === 0 ? -10 : idx === 1 ? 5 : 15,
@@ -262,7 +250,7 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
               }}
               style={{
                 top: idx === 0 ? '10%' : idx === 1 ? '5%' : '20%',
-                left: idx === 0 ? '10%' : idx === 1 ? '40%' : '25%',
+                left: idx === 0 ? '15%' : idx === 1 ? '45%' : '30%',
                 zIndex: idx
               }}
             >
@@ -276,21 +264,20 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                     }}
                 />
                 
-                {/* Edit Overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
                     <button 
                         onClick={() => handleEditClick(idx)}
-                        className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-pink-500 hover:scale-110 transition-all"
+                        className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-pink-500 hover:scale-110 transition-all"
                         title="Upload Photo"
                     >
-                        <Camera size={24} />
+                        <Camera size={20} />
                     </button>
                     <button 
                         onClick={(e) => handleAdjustClick(e, idx)}
-                        className="bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
+                        className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
                         title="Adjust Position & Zoom"
                     >
-                        <Move size={24} />
+                        <Move size={20} />
                     </button>
                 </div>
               </div>

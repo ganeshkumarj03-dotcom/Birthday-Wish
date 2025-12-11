@@ -1,6 +1,7 @@
 import { SlideTextData, GalleryImage } from './types';
 
 // Compress and resize image to fit in URL
+// Reduced max size to 300px and quality to 0.5 to ensure URLs remain manageable for sharing
 export const resizeImage = (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -10,7 +11,7 @@ export const resizeImage = (file: File): Promise<string> => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const MAX_SIZE = 350; // Max dimension to keep URL length manageable
+        const MAX_SIZE = 300; 
         
         if (width > height) {
           if (width > MAX_SIZE) {
@@ -29,8 +30,8 @@ export const resizeImage = (file: File): Promise<string> => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            // Convert to JPEG with moderate compression
-            resolve(canvas.toDataURL('image/jpeg', 0.6));
+            // Convert to JPEG with higher compression
+            resolve(canvas.toDataURL('image/jpeg', 0.5));
         } else {
             resolve(e.target?.result as string);
         }
@@ -65,7 +66,7 @@ export const decodeStateFromUrl = (): AppState | null => {
     const hash = window.location.hash.slice(1); // Remove #
     if (!hash) return null;
     
-    // Check if hash looks like our data (simple heuristic)
+    // Check if hash looks like our data
     if (hash.startsWith("data=")) {
        const data = hash.replace("data=", "");
        const jsonStr = decodeURIComponent(atob(data));
