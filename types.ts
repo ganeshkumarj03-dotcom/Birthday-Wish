@@ -20,10 +20,20 @@ export interface SlideTextData {
   };
 }
 
+// The shape of the data stored in the database
+export interface BirthdayData {
+  id?: string;
+  name: string;
+  textData: SlideTextData;
+  galleryImages: GalleryImage[];
+  createdAt: number;
+}
+
 export interface SlideProps {
   name: string;
   isActive: boolean;
   direction: number;
+  isReadOnly?: boolean; // Added optional read-only flag
   onNext: () => void;
   onPrev: () => void;
   galleryImages: GalleryImage[];

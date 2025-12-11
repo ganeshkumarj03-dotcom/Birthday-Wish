@@ -4,7 +4,7 @@ import { SlideProps } from '../../types';
 import Confetti from '../Confetti';
 import { Edit2 } from 'lucide-react';
 
-const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit }) => {
+const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit, isReadOnly }) => {
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 px-4">
       {isActive && <Confetti />}
@@ -25,13 +25,15 @@ const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit }) 
             >
             {textData.intro.subtitle}
             </motion.p>
-            <button 
-                onClick={() => onEdit('intro', 'subtitle', textData.intro.subtitle)}
-                className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-white/10 rounded-full hover:bg-white/20"
-                title="Edit text"
-            >
-                <Edit2 size={14} className="text-white" />
-            </button>
+            {!isReadOnly && (
+                <button 
+                    onClick={() => onEdit('intro', 'subtitle', textData.intro.subtitle)}
+                    className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-white/10 rounded-full hover:bg-white/20"
+                    title="Edit text"
+                >
+                    <Edit2 size={14} className="text-white" />
+                </button>
+            )}
         </div>
         
         <div className="relative inline-block group w-full mb-4">
@@ -43,13 +45,15 @@ const IntroSlide: React.FC<SlideProps> = ({ name, isActive, textData, onEdit }) 
             >
             {textData.intro.title}
             </motion.h1>
-            <button 
-                onClick={() => onEdit('intro', 'title', textData.intro.title)}
-                className="absolute right-0 md:-right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
-                title="Edit text"
-            >
-                <Edit2 size={20} className="text-white" />
-            </button>
+            {!isReadOnly && (
+                <button 
+                    onClick={() => onEdit('intro', 'title', textData.intro.title)}
+                    className="absolute right-0 md:-right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
+                    title="Edit text"
+                >
+                    <Edit2 size={20} className="text-white" />
+                </button>
+            )}
         </div>
         
         <motion.div

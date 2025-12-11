@@ -6,16 +6,21 @@ import WishesSlide from './components/slides/WishesSlide';
 import AiWishSlide from './components/slides/AiWishSlide';
 import Controls from './components/Controls';
 import { SlideType, SlideTextData, GalleryImage } from './types';
-import { decodeStateFromUrl, encodeStateToUrl } from './utils';
-import { Check } from 'lucide-react';
+import { saveBirthdayData, getBirthdayData } from './services/api';
+import { Check, Loader2 } from 'lucide-react';
 
 function App() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [name, setName] = useState('My Friend');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
-  // State for all editable text in the app
+  // App Modes
+  const [isLoading, setIsLoading] = useState(true);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Data State
+  const [name, setName] = useState('My Friend');
   const [textData, setTextData] = useState<SlideTextData>({
     intro: {
       subtitle: "It's a special day...",
@@ -34,36 +39,39 @@ function App() {
         signature: "With Love"
     }
   });
-
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([
     { src: `https://picsum.photos/seed/memories1/400/500`, scale: 1, offsetX: 0, offsetY: 0 },
     { src: `https://picsum.photos/seed/memories2/400/500`, scale: 1, offsetX: 0, offsetY: 0 },
     { src: `https://picsum.photos/seed/memories3/400/500`, scale: 1, offsetX: 0, offsetY: 0 },
   ]);
 
-  // Load state from URL on startup
+  // Initial Load - Check for ID in URL
   useEffect(() => {
-    const loadedState = decodeStateFromUrl();
-    if (loadedState) {
-        setName(loadedState.name);
-        setTextData(loadedState.textData);
-        setGalleryImages(loadedState.galleryImages);
-    }
+    const init = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      if (id) {
+        setIsLoading(true);
+        const data = await getBirthdayData(id);
+        if (data) {
+          setName(data.name);
+          setTextData(data.textData);
+          setGalleryImages(data.galleryImages);
+          setIsReadOnly(true); // Enable View-Only mode
+        } else {
+          setToastMessage("Could not find birthday wishes. Creating a new one.");
+        }
+        setIsLoading(false);
+      } else {
+        // New creation mode
+        setIsLoading(false);
+      }
+    };
+    init();
   }, []);
 
-  // Auto-save state to URL whenever it changes
-  useEffect(() => {
-    // Debounce the update to prevent freezing while typing
-    const handler = setTimeout(() => {
-        const encoded = encodeStateToUrl({ name, textData, galleryImages });
-        // Update URL without reloading page
-        window.history.replaceState(null, '', `#data=${encoded}`);
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [name, textData, galleryImages]);
-
-  // State for the generic edit modal
+  // Generic Edit Modal State
   const [editingState, setEditingState] = useState<{
     type: 'name' | 'text';
     section?: keyof SlideTextData;
@@ -88,24 +96,56 @@ function App() {
   };
 
   const handleEditName = () => {
+    if (isReadOnly) return;
     setEditingState({ type: 'name', value: name });
   };
 
   const handleEditText = (section: keyof SlideTextData, field: string | number, currentValue: string) => {
+    if (isReadOnly) return;
     setEditingState({ type: 'text', section, field, value: currentValue });
   };
 
-  const handleShare = () => {
-      // Simply copy the current URL which is always up to date due to the auto-save effect
-      navigator.clipboard.writeText(window.location.href).then(() => {
-          setToastMessage("Link copied! Send it to your friend.");
-          setTimeout(() => setToastMessage(null), 3000);
-      }).catch(() => {
-          setToastMessage("Could not copy. Please copy the URL manually.");
-      });
+  // SHARE = SAVE TO DB -> GET LINK
+  const handleShare = async () => {
+    if (isSaving) return;
+    
+    // If already read-only, just copy current link
+    if (isReadOnly) {
+        navigator.clipboard.writeText(window.location.href);
+        setToastMessage("Link copied!");
+        setTimeout(() => setToastMessage(null), 3000);
+        return;
+    }
+
+    setIsSaving(true);
+    setToastMessage("Saving your wishes...");
+    
+    // Save to backend
+    const id = await saveBirthdayData({
+      name,
+      textData,
+      galleryImages,
+      createdAt: Date.now()
+    });
+
+    setIsSaving(false);
+
+    // Update URL without reload
+    const newUrl = `${window.location.origin}${window.location.pathname}?id=${id}`;
+    window.history.pushState({ path: newUrl }, '', newUrl);
+    
+    // Enter read-only mode implicitly or just copy link? 
+    // Usually user wants to keep editing, but link is for friend.
+    
+    navigator.clipboard.writeText(newUrl).then(() => {
+        setToastMessage("Link created & copied! Send it to your friend.");
+        setTimeout(() => setToastMessage(null), 3000);
+    }).catch(() => {
+        setToastMessage("Saved! Please copy the URL from address bar.");
+    });
   };
 
-  const handleSave = () => {
+  const handleSaveEdit = () => {
     if (!editingState) return;
 
     if (editingState.type === 'name') {
@@ -137,6 +177,7 @@ function App() {
   };
 
   const handleUpdateImage = (index: number, updates: Partial<GalleryImage>) => {
+    if (isReadOnly) return;
     const newImages = [...galleryImages];
     newImages[index] = { ...newImages[index], ...updates };
     setGalleryImages(newImages);
@@ -175,6 +216,7 @@ function App() {
       name,
       isActive: true, 
       direction,
+      isReadOnly, // Pass read-only state to slides
       onNext: handleNext,
       onPrev: handlePrev,
       galleryImages,
@@ -192,8 +234,16 @@ function App() {
     }
   };
 
+  if (isLoading) {
+      return (
+          <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center gap-4">
+              <Loader2 className="animate-spin text-pink-500" size={48} />
+              <p className="text-xl font-light">Loading wishes...</p>
+          </div>
+      );
+  }
+
   return (
-    // Fixed positioning with 100dvh handles mobile browser bars better
     <div className="fixed inset-0 w-full h-[100dvh] bg-black text-white overflow-hidden font-sans selection:bg-pink-500 selection:text-white">
       
       {/* Toast Notification */}
@@ -213,7 +263,7 @@ function App() {
 
       {/* Generic Edit Modal */}
       <AnimatePresence>
-        {editingState && (
+        {editingState && !isReadOnly && (
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
@@ -233,7 +283,7 @@ function App() {
                   <textarea
                     value={editingState.value}
                     onChange={(e) => setEditingState({...editingState, value: e.target.value})}
-                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSave())}
+                    onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSaveEdit())}
                     className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-pink-500 outline-none mb-6 text-white min-h-[120px]"
                     placeholder="Enter message..."
                     autoFocus
@@ -243,7 +293,7 @@ function App() {
                     type="text" 
                     value={editingState.value}
                     onChange={(e) => setEditingState({...editingState, value: e.target.value})}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
                     className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-pink-500 outline-none mb-6 text-white"
                     placeholder="Enter text..."
                     autoFocus
@@ -258,7 +308,7 @@ function App() {
                   Cancel
                 </button>
                 <button 
-                  onClick={handleSave}
+                  onClick={handleSaveEdit}
                   className="px-6 py-2 bg-pink-500 rounded-lg font-bold hover:bg-pink-600 transition-colors"
                 >
                   Save
@@ -295,6 +345,7 @@ function App() {
         onPrev={handlePrev}
         onEditName={handleEditName}
         onShare={handleShare}
+        isReadOnly={isReadOnly}
       />
     </div>
   );

@@ -1,22 +1,25 @@
 import React, { useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SlideProps } from '../../types';
-import { Camera, Edit2, Move, ZoomIn, ZoomOut, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Check, X, RotateCcw } from 'lucide-react';
+import { Camera, Edit2, Move, ZoomIn, ZoomOut, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Check, X, RotateCcw, Maximize2 } from 'lucide-react';
 import { resizeImage } from '../../utils';
 
-const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage, textData, onEdit }) => {
+const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage, textData, onEdit, isReadOnly }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [adjustingIndex, setAdjustingIndex] = useState<number | null>(null);
+  const [viewingIndex, setViewingIndex] = useState<number | null>(null); // For lightbox
   const [tempAdjust, setTempAdjust] = useState({ scale: 1, offsetX: 0, offsetY: 0 });
 
   const handleEditClick = (index: number) => {
+    if (isReadOnly) return;
     setEditingIndex(index);
     fileInputRef.current?.click();
   };
 
   const handleAdjustClick = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
+    if (isReadOnly) return;
     setAdjustingIndex(index);
     const img = galleryImages[index];
     setTempAdjust({ scale: img.scale, offsetX: img.offsetX, offsetY: img.offsetY });
@@ -63,6 +66,31 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
         accept="image/*" 
         className="hidden" 
       />
+
+      {/* Lightbox Modal (Full View) */}
+      <AnimatePresence>
+        {viewingIndex !== null && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer"
+                onClick={() => setViewingIndex(null)}
+            >
+                <button className="absolute top-6 right-6 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors z-[101]">
+                    <X size={32} />
+                </button>
+                <motion.img 
+                    src={galleryImages[viewingIndex].src}
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0.8 }}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    onClick={(e) => e.stopPropagation()} 
+                />
+            </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Adjustment Modal */}
       <AnimatePresence>
@@ -197,13 +225,15 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
             >
                 {textData.gallery.title} <span className="text-pink-400 font-handwriting">Cherish</span>
             </motion.h2>
-            <button 
-                onClick={() => onEdit('gallery', 'title', textData.gallery.title)}
-                className="absolute -right-8 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
-                title="Edit title"
-            >
-                <Edit2 size={16} className="text-white" />
-            </button>
+            {!isReadOnly && (
+                <button 
+                    onClick={() => onEdit('gallery', 'title', textData.gallery.title)}
+                    className="absolute -right-8 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
+                    title="Edit title"
+                >
+                    <Edit2 size={16} className="text-white" />
+                </button>
+            )}
           </div>
 
           <div className="relative group mt-2 md:mt-4">
@@ -215,13 +245,15 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
             >
                 {textData.gallery.body.replace('{name}', name)}
             </motion.p>
-            <button 
-                onClick={() => onEdit('gallery', 'body', textData.gallery.body)}
-                className="absolute -right-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
-                title="Edit message"
-            >
-                <Edit2 size={14} className="text-white" />
-            </button>
+            {!isReadOnly && (
+                <button 
+                    onClick={() => onEdit('gallery', 'body', textData.gallery.body)}
+                    className="absolute -right-4 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white/10 rounded-full hover:bg-white/20"
+                    title="Edit message"
+                >
+                    <Edit2 size={14} className="text-white" />
+                </button>
+            )}
           </div>
         </div>
 
@@ -265,20 +297,32 @@ const GallerySlide: React.FC<SlideProps> = ({ name, galleryImages, onUpdateImage
                 />
                 
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
-                    <button 
-                        onClick={() => handleEditClick(idx)}
-                        className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-pink-500 hover:scale-110 transition-all"
-                        title="Upload Photo"
-                    >
-                        <Camera size={20} />
-                    </button>
-                    <button 
-                        onClick={(e) => handleAdjustClick(e, idx)}
-                        className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
-                        title="Adjust Position & Zoom"
-                    >
-                        <Move size={20} />
-                    </button>
+                    {!isReadOnly ? (
+                        <>
+                            <button 
+                                onClick={() => handleEditClick(idx)}
+                                className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-pink-500 hover:scale-110 transition-all"
+                                title="Upload Photo"
+                            >
+                                <Camera size={20} />
+                            </button>
+                            <button 
+                                onClick={(e) => handleAdjustClick(e, idx)}
+                                className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
+                                title="Adjust Position & Zoom"
+                            >
+                                <Move size={20} />
+                            </button>
+                        </>
+                    ) : (
+                        <button 
+                            onClick={() => setViewingIndex(idx)}
+                            className="bg-white/20 backdrop-blur-md p-2 md:p-3 rounded-full text-white hover:bg-indigo-500 hover:scale-110 transition-all"
+                            title="Full View"
+                        >
+                            <Maximize2 size={24} />
+                        </button>
+                    )}
                 </div>
               </div>
             </motion.div>

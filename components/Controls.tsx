@@ -8,9 +8,10 @@ interface ControlsProps {
   onPrev: () => void;
   onEditName: () => void;
   onShare: () => void;
+  isReadOnly?: boolean;
 }
 
-const Controls: React.FC<ControlsProps> = ({ currentSlide, totalSlides, onNext, onPrev, onEditName, onShare }) => {
+const Controls: React.FC<ControlsProps> = ({ currentSlide, totalSlides, onNext, onPrev, onEditName, onShare, isReadOnly }) => {
   const [showActions, setShowActions] = useState(true);
   const timerRef = useRef<number | null>(null);
 
@@ -79,14 +80,16 @@ const Controls: React.FC<ControlsProps> = ({ currentSlide, totalSlides, onNext, 
                 <Share2 size={20} />
             </button>
             
-            <button
-                onClick={onEditName}
-                disabled={!showActions}
-                className={`p-3 rounded-full bg-pink-500/80 backdrop-blur-md hover:bg-pink-600 transition-all text-white shadow-lg ${!showActions ? 'cursor-default pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
-                title="Edit Name"
-            >
-                <Edit2 size={20} />
-            </button>
+            {!isReadOnly && (
+                <button
+                    onClick={onEditName}
+                    disabled={!showActions}
+                    className={`p-3 rounded-full bg-pink-500/80 backdrop-blur-md hover:bg-pink-600 transition-all text-white shadow-lg ${!showActions ? 'cursor-default pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
+                    title="Edit Name"
+                >
+                    <Edit2 size={20} />
+                </button>
+            )}
           </div>
       )}
     </div>
