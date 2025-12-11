@@ -18,22 +18,22 @@ export const saveBirthdayData = async (data: BirthdayData): Promise<string> => {
     });
 
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      throw new Error(`Server error: ${response.status} ${response.statusText}`);
     }
 
     // The API returns the location of the saved data in the header
     // Example: https://jsonblob.com/api/jsonBlob/12345-67890-abcd
-    const location = response.headers.get('Location');
+    const location = response.headers.get('Location') || response.headers.get('location');
     
     if (!location) {
-        throw new Error("No location header returned");
+        throw new Error("No location header returned from storage service. Your browser might be blocking headers.");
     }
 
     // Extract the ID from the end of the URL
     const id = location.split('/').pop();
     
     if (!id) {
-         throw new Error("Could not parse ID");
+         throw new Error("Could not parse ID from location header");
     }
 
     return id;

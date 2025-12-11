@@ -7,12 +7,12 @@ import AiWishSlide from './components/slides/AiWishSlide';
 import Controls from './components/Controls';
 import { SlideType, SlideTextData, GalleryImage } from './types';
 import { saveBirthdayData, getBirthdayData } from './services/api';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, AlertCircle } from 'lucide-react';
 
 function App() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   // App Modes
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +45,12 @@ function App() {
     { src: `https://picsum.photos/seed/memories3/400/500`, scale: 1, offsetX: 0, offsetY: 0 },
   ]);
 
+  // Helper for showing toasts
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // Initial Load - Check for ID in URL
   useEffect(() => {
     const init = async () => {
@@ -60,7 +66,7 @@ function App() {
           setGalleryImages(data.galleryImages);
           setIsReadOnly(true); // Enable View-Only mode
         } else {
-          setToastMessage("Could not find birthday wishes. Creating a new one.");
+          showToast("Could not find birthday wishes. Creating a new one.", 'error');
         }
         setIsLoading(false);
       } else {
@@ -112,37 +118,41 @@ function App() {
     // If already read-only, just copy current link
     if (isReadOnly) {
         navigator.clipboard.writeText(window.location.href);
-        setToastMessage("Link copied!");
-        setTimeout(() => setToastMessage(null), 3000);
+        showToast("Link copied!");
         return;
     }
 
     setIsSaving(true);
-    setToastMessage("Saving your wishes...");
+    showToast("Saving your wishes...", 'success');
     
-    // Save to backend
-    const id = await saveBirthdayData({
-      name,
-      textData,
-      galleryImages,
-      createdAt: Date.now()
-    });
+    try {
+        // Save to backend
+        const id = await saveBirthdayData({
+            name,
+            textData,
+            galleryImages,
+            createdAt: Date.now()
+        });
 
-    setIsSaving(false);
-
-    // Update URL without reload
-    const newUrl = `${window.location.origin}${window.location.pathname}?id=${id}`;
-    window.history.pushState({ path: newUrl }, '', newUrl);
-    
-    // Enter read-only mode implicitly or just copy link? 
-    // Usually user wants to keep editing, but link is for friend.
-    
-    navigator.clipboard.writeText(newUrl).then(() => {
-        setToastMessage("Link created & copied! Send it to your friend.");
-        setTimeout(() => setToastMessage(null), 3000);
-    }).catch(() => {
-        setToastMessage("Saved! Please copy the URL from address bar.");
-    });
+        // Update URL without reload
+        const newUrl = `${window.location.origin}${window.location.pathname}?id=${id}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+        
+        // Copy to clipboard
+        try {
+            await navigator.clipboard.writeText(newUrl);
+            showToast("Link created & copied! Send it to your friend.");
+        } catch (err) {
+            console.warn("Clipboard failed", err);
+            showToast("Saved! Please copy the URL from the address bar.", 'success');
+        }
+        
+    } catch (error) {
+        console.error("Share failed", error);
+        showToast("Failed to save. Check your connection.", 'error');
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   const handleSaveEdit = () => {
@@ -248,15 +258,21 @@ function App() {
       
       {/* Toast Notification */}
       <AnimatePresence>
-        {toastMessage && (
+        {toast && (
             <motion.div
                 initial={{ opacity: 0, y: -50 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -50 }}
-                className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] bg-white/90 backdrop-blur-md text-black px-6 py-3 rounded-full shadow-xl font-semibold flex items-center gap-2 w-max max-w-[90vw] text-center"
+                className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full shadow-xl font-semibold flex items-center gap-2 w-max max-w-[90vw] text-center backdrop-blur-md ${
+                    toast.type === 'error' ? 'bg-red-500/90 text-white' : 'bg-white/90 text-black'
+                }`}
             >
-                <Check size={18} className="text-green-600 shrink-0" />
-                {toastMessage}
+                {toast.type === 'error' ? (
+                    <AlertCircle size={18} className="shrink-0" />
+                ) : (
+                    <Check size={18} className="text-green-600 shrink-0" />
+                )}
+                {toast.message}
             </motion.div>
         )}
       </AnimatePresence>
