@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { SlideProps } from '../../types';
 import { Sparkles, Edit2 } from 'lucide-react';
 
-const WishesSlide: React.FC<SlideProps> = ({ name, textData, onEdit }) => {
+const WishesSlide: React.FC<SlideProps> = ({ name, textData, isReadOnly, onEdit }) => {
   return (
     <div className="relative w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white p-4 md:p-6 overflow-y-auto">
        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black z-0 fixed"></div>
@@ -28,15 +28,17 @@ const WishesSlide: React.FC<SlideProps> = ({ name, textData, onEdit }) => {
                   <Sparkles size={80} />
                </div>
                
-               <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20">
-                 <button 
-                    onClick={() => onEdit('wishes', index, wish)}
-                    className="p-1.5 bg-white/10 rounded-full hover:bg-white/30 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Edit Wish"
-                 >
-                    <Edit2 size={14} />
-                 </button>
-               </div>
+               {!isReadOnly && (
+                   <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20">
+                     <button 
+                        onClick={() => onEdit('wishes', index, wish)}
+                        className="p-1.5 bg-white/10 rounded-full hover:bg-white/30 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Edit Wish"
+                     >
+                        <Edit2 size={14} />
+                     </button>
+                   </div>
+               )}
                
                <p className="text-base md:text-xl font-light leading-relaxed relative z-10 text-center">
                  "{wish}"
@@ -55,13 +57,15 @@ const WishesSlide: React.FC<SlideProps> = ({ name, textData, onEdit }) => {
                 <p className="text-pink-300 font-semibold tracking-wider uppercase text-sm cursor-pointer hover:text-pink-200 transition-colors">
                     {textData.wishes.signature}
                 </p>
-                <button 
-                    onClick={() => onEdit('wishes', 'signature', textData.wishes.signature)}
-                    className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-white/10 rounded-full hover:bg-white/20"
-                    title="Edit Signature"
-                >
-                    <Edit2 size={12} className="text-white" />
-                </button>
+                {!isReadOnly && (
+                    <button 
+                        onClick={() => onEdit('wishes', 'signature', textData.wishes.signature)}
+                        className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-white/10 rounded-full hover:bg-white/20"
+                        title="Edit Signature"
+                    >
+                        <Edit2 size={12} className="text-white" />
+                    </button>
+                )}
             </div>
             <h3 className="text-2xl md:text-3xl font-handwriting mt-2">For {name}</h3>
          </motion.div>

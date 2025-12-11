@@ -18,12 +18,17 @@ export interface SlideTextData {
     items: string[];
     signature: string;
   };
+  ai: {
+    wish: string;
+    style: string;
+  };
 }
 
 export interface SlideProps {
   name: string;
   isActive: boolean;
   direction: number;
+  isReadOnly: boolean;
   onNext: () => void;
   onPrev: () => void;
   galleryImages: GalleryImage[];
