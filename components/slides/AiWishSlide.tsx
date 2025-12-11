@@ -4,17 +4,16 @@ import { SlideProps } from '../../types';
 import { Wand2, RefreshCw, Copy, Check } from 'lucide-react';
 import { generateUniqueWish } from '../../services/geminiService';
 
-const AiWishSlide: React.FC<SlideProps> = ({ name, textData, onEdit, isReadOnly }) => {
+const AiWishSlide: React.FC<SlideProps> = ({ name }) => {
+  const [wish, setWish] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [style, setStyle] = useState<'funny' | 'heartfelt' | 'poetic'>('heartfelt');
 
-  const wish = textData.ai.wish;
-
   const handleGenerate = async () => {
     setLoading(true);
     const newWish = await generateUniqueWish(name, style);
-    onEdit('ai', 'wish', newWish);
+    setWish(newWish);
     setLoading(false);
   };
 
@@ -48,24 +47,22 @@ const AiWishSlide: React.FC<SlideProps> = ({ name, textData, onEdit, isReadOnly 
             <p className="text-sm md:text-base text-gray-400 mt-2">Let the AI stars align a unique wish just for {name}.</p>
         </div>
 
-        {/* Controls - Only show if not read-only */}
-        {!isReadOnly && (
-            <div className="flex justify-center gap-2 md:gap-3 mb-6 md:mb-8 flex-wrap">
-                {(['funny', 'heartfelt', 'poetic'] as const).map((s) => (
-                    <button
-                        key={s}
-                        onClick={() => setStyle(s)}
-                        className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
-                            style === s 
-                            ? 'bg-white text-black scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
-                            : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                        }`}
-                    >
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                ))}
-            </div>
-        )}
+        {/* Controls */}
+        <div className="flex justify-center gap-2 md:gap-3 mb-6 md:mb-8 flex-wrap">
+            {(['funny', 'heartfelt', 'poetic'] as const).map((s) => (
+                <button
+                    key={s}
+                    onClick={() => setStyle(s)}
+                    className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-semibold transition-all ${
+                        style === s 
+                        ? 'bg-white text-black scale-105 shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }`}
+                >
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+            ))}
+        </div>
 
         {/* Wish Display Area */}
         <div className="min-h-[140px] md:min-h-[160px] flex items-center justify-center mb-6">
@@ -94,24 +91,20 @@ const AiWishSlide: React.FC<SlideProps> = ({ name, textData, onEdit, isReadOnly 
                     </button>
                 </motion.div>
             ) : (
-                <div className="text-sm md:text-base text-gray-500 italic">
-                    {isReadOnly ? "No cosmic wish generated yet." : "Tap generate to reveal your cosmic wish..."}
-                </div>
+                <div className="text-sm md:text-base text-gray-500 italic">Tap generate to reveal your cosmic wish...</div>
             )}
         </div>
 
-        {/* Main Action Button - Hide if read only and a wish exists, or maybe just hide always for read only? */}
-        {!isReadOnly && (
-            <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleGenerate}
-                disabled={loading}
-                className="px-6 py-2 md:px-8 md:py-3 bg-gradient-to-r from-indigo-600 to-pink-600 rounded-full font-bold text-sm md:text-lg shadow-lg hover:shadow-indigo-500/30 transition-shadow disabled:opacity-50"
-            >
-                {wish ? 'Regenerate Wish' : 'Generate Wish'}
-            </motion.button>
-        )}
+        {/* Main Action Button */}
+        <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleGenerate}
+            disabled={loading}
+            className="px-6 py-2 md:px-8 md:py-3 bg-gradient-to-r from-indigo-600 to-pink-600 rounded-full font-bold text-sm md:text-lg shadow-lg hover:shadow-indigo-500/30 transition-shadow disabled:opacity-50"
+        >
+            {wish ? 'Regenerate Wish' : 'Generate Wish'}
+        </motion.button>
 
       </motion.div>
     </div>

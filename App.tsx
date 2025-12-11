@@ -15,15 +15,6 @@ function App() {
   const [name, setName] = useState('My Friend');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
-  // Determine if we are in view-only mode based on URL query param
-  const [isReadOnly, setIsReadOnly] = useState(() => {
-    if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('view') === 'true';
-    }
-    return false;
-  });
-  
   // State for all editable text in the app
   const [textData, setTextData] = useState<SlideTextData>({
     intro: {
@@ -41,10 +32,6 @@ function App() {
             "Cheers to your personal new year! Let's make it the best one yet."
         ],
         signature: "With Love"
-    },
-    ai: {
-        wish: "",
-        style: "heartfelt"
     }
   });
 
@@ -59,28 +46,22 @@ function App() {
     const loadedState = decodeStateFromUrl();
     if (loadedState) {
         setName(loadedState.name);
-        // Merge loaded text data with default to ensure new fields (like 'ai') exist
-        setTextData(prev => ({ 
-            ...prev, 
-            ...loadedState.textData,
-            ai: loadedState.textData.ai || prev.ai 
-        }));
+        setTextData(loadedState.textData);
         setGalleryImages(loadedState.galleryImages);
     }
   }, []);
 
-  // Auto-save state to URL whenever it changes (ONLY if not in read-only mode)
+  // Auto-save state to URL whenever it changes
   useEffect(() => {
-    if (isReadOnly) return;
-
     // Debounce the update to prevent freezing while typing
     const handler = setTimeout(() => {
         const encoded = encodeStateToUrl({ name, textData, galleryImages });
+        // Update URL without reloading page
         window.history.replaceState(null, '', `#data=${encoded}`);
-    }, 200);
+    }, 500);
 
     return () => clearTimeout(handler);
-  }, [name, textData, galleryImages, isReadOnly]);
+  }, [name, textData, galleryImages]);
 
   // State for the generic edit modal
   const [editingState, setEditingState] = useState<{
@@ -115,17 +96,12 @@ function App() {
   };
 
   const handleShare = () => {
-      // Construct the URL directly from the CURRENT state to ensure it includes the latest changes
-      // This bypasses the debounced auto-save URL in the address bar
-      const encodedState = encodeStateToUrl({ name, textData, galleryImages });
-      const baseUrl = window.location.origin + window.location.pathname;
-      const shareUrl = `${baseUrl}?view=true#data=${encodedState}`;
-
-      navigator.clipboard.writeText(shareUrl).then(() => {
+      // Simply copy the current URL which is always up to date due to the auto-save effect
+      navigator.clipboard.writeText(window.location.href).then(() => {
           setToastMessage("Link copied! Send it to your friend.");
           setTimeout(() => setToastMessage(null), 3000);
       }).catch(() => {
-          setToastMessage("Could not copy. Please manually copy the link.");
+          setToastMessage("Could not copy. Please copy the URL manually.");
       });
   };
 
@@ -146,12 +122,6 @@ function App() {
                  // Update signature
                  newTextData.wishes = { ...newTextData.wishes, signature: editingState.value };
              }
-        } else if (editingState.section === 'ai') {
-             // Handle AI section updates (wish text)
-             newTextData.ai = { 
-                 ...newTextData.ai, 
-                 [editingState.field]: editingState.value 
-             };
         } else {
              // Handle object update for intro/gallery
              // @ts-ignore
@@ -205,7 +175,6 @@ function App() {
       name,
       isActive: true, 
       direction,
-      isReadOnly,
       onNext: handleNext,
       onPrev: handlePrev,
       galleryImages,
@@ -322,7 +291,6 @@ function App() {
       <Controls 
         currentSlide={currentSlideIndex} 
         totalSlides={slides.length} 
-        isReadOnly={isReadOnly}
         onNext={handleNext} 
         onPrev={handlePrev}
         onEditName={handleEditName}

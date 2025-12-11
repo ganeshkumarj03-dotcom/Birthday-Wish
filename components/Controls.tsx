@@ -4,14 +4,13 @@ import { ChevronLeft, ChevronRight, Edit2, Share2 } from 'lucide-react';
 interface ControlsProps {
   currentSlide: number;
   totalSlides: number;
-  isReadOnly: boolean;
   onNext: () => void;
   onPrev: () => void;
   onEditName: () => void;
   onShare: () => void;
 }
 
-const Controls: React.FC<ControlsProps> = ({ currentSlide, totalSlides, isReadOnly, onNext, onPrev, onEditName, onShare }) => {
+const Controls: React.FC<ControlsProps> = ({ currentSlide, totalSlides, onNext, onPrev, onEditName, onShare }) => {
   const [showActions, setShowActions] = useState(true);
   const timerRef = useRef<number | null>(null);
 
@@ -63,10 +62,7 @@ const Controls: React.FC<ControlsProps> = ({ currentSlide, totalSlides, isReadOn
         <ChevronRight size={24} />
       </button>
       
-      {/* Share and Edit Buttons - Only visible on Slide 0 and if NOT read-only (edit) or just allow share? 
-          User said: "edit options should not be shown... but updates should be shown". 
-          Sharing a shared link (viral) is fine, so we keep share, but remove Edit Name.
-      */}
+      {/* Share and Edit Buttons - Only visible on Slide 0 */}
       {currentSlide === 0 && (
           <div 
             className={`absolute right-8 md:relative md:right-auto flex flex-col md:flex-row gap-3 top-[-80vh] md:top-auto transition-opacity duration-500 ${showActions ? 'opacity-100' : 'opacity-0'}`}
@@ -83,16 +79,14 @@ const Controls: React.FC<ControlsProps> = ({ currentSlide, totalSlides, isReadOn
                 <Share2 size={20} />
             </button>
             
-            {!isReadOnly && (
-                <button
-                    onClick={onEditName}
-                    disabled={!showActions}
-                    className={`p-3 rounded-full bg-pink-500/80 backdrop-blur-md hover:bg-pink-600 transition-all text-white shadow-lg ${!showActions ? 'cursor-default pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
-                    title="Edit Name"
-                >
-                    <Edit2 size={20} />
-                </button>
-            )}
+            <button
+                onClick={onEditName}
+                disabled={!showActions}
+                className={`p-3 rounded-full bg-pink-500/80 backdrop-blur-md hover:bg-pink-600 transition-all text-white shadow-lg ${!showActions ? 'cursor-default pointer-events-none' : 'cursor-pointer pointer-events-auto'}`}
+                title="Edit Name"
+            >
+                <Edit2 size={20} />
+            </button>
           </div>
       )}
     </div>
