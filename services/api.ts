@@ -1,42 +1,31 @@
 import { BirthdayData } from '../types';
 
-// We are now using JSONBlob.com as a free, no-login cloud database.
-// This allows the data to be saved on a server so it can be accessed 
-// from any device (Laptop -> Mobile).
-
-const API_BASE_URL = 'https://jsonblob.com/api/jsonBlob';
+// Switching to ByteBin which returns the key in the JSON body.
+// This avoids the "Location Header" CORS issue prevalent on mobile browsers with JsonBlob.
+const API_BASE_URL = 'https://bytebin.lucko.me';
 
 export const saveBirthdayData = async (data: BirthdayData): Promise<string> => {
   try {
-    const response = await fetch(API_BASE_URL, {
+    const response = await fetch(`${API_BASE_URL}/post`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      throw new Error(`Storage service error: ${response.status}`);
     }
 
-    // The API returns the location of the saved data in the header
-    // Example: https://jsonblob.com/api/jsonBlob/12345-67890-abcd
-    const location = response.headers.get('Location') || response.headers.get('location');
+    const responseData = await response.json();
     
-    if (!location) {
-        throw new Error("No location header returned from storage service. Your browser might be blocking headers.");
+    // ByteBin returns { "key": "..." }
+    if (!responseData.key) {
+        throw new Error("Invalid response from storage service");
     }
 
-    // Extract the ID from the end of the URL
-    const id = location.split('/').pop();
-    
-    if (!id) {
-         throw new Error("Could not parse ID from location header");
-    }
-
-    return id;
+    return responseData.key;
   } catch (error) {
     console.error("Error saving to database:", error);
     throw error;

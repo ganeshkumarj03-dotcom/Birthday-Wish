@@ -147,9 +147,10 @@ function App() {
             showToast("Saved! Please copy the URL from the address bar.", 'success');
         }
         
-    } catch (error) {
+    } catch (error: any) {
         console.error("Share failed", error);
-        showToast("Failed to save. Check your connection.", 'error');
+        // Show specific error if available to help debugging
+        showToast(`Failed to save: ${error.message || "Network error"}`, 'error');
     } finally {
         setIsSaving(false);
     }
